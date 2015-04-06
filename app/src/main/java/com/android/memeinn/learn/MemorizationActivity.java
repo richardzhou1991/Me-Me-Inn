@@ -18,6 +18,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Locale;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.view.Menu;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
 
 /**
  * Activity for the learning system. Used to learn/memorize words.
@@ -34,6 +43,29 @@ public class MemorizationActivity extends ActionBarActivity {
     private TextView wordContentView;
     private TextView wordMeaningView;
 
+    TextToSpeech ttobj;
+    private EditText write;
+
+
+    @Override
+    public void onPause(){
+        if(ttobj !=null){
+            ttobj.stop();
+            ttobj.shutdown();
+        }
+        super.onPause();
+    }
+
+
+    public void speakText(View view){
+        String toSpeak = getWordContent(currPos);
+        Toast.makeText(getApplicationContext(), toSpeak,
+                Toast.LENGTH_SHORT).show();
+        ttobj.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +79,18 @@ public class MemorizationActivity extends ActionBarActivity {
         Log.d("myapp", "Memorization.vocabType = " + vocabType);
         frequencyText = intent.getStringExtra(ChapterActivity.EXTRA_MESSAGE_FREQUENCY);
         wordTableName = intent.getStringExtra(ChapterActivity.EXTRA_MESSAGE_TABLE_NAME);
+
+        //added here
+        write = (EditText)findViewById(R.id.hidden_edit_view);
+        ttobj=new TextToSpeech(getApplicationContext(),
+                new TextToSpeech.OnInitListener() {
+                    @Override
+                    public void onInit(int status) {
+                        if(status != TextToSpeech.ERROR){
+                            ttobj.setLanguage(Locale.US);
+                        }
+                    }
+                });
 
         initDict();
     }
@@ -150,6 +194,13 @@ public class MemorizationActivity extends ActionBarActivity {
         String wordMeaning = entry.getValue();
         this.wordContentView.setText(wordContent);
         this.wordMeaningView.setText(wordMeaning);
+    }
+
+    private String getWordContent(int pos){
+
+        Map.Entry<String, String> entry = indexedList.get(pos);
+        String wordContent = entry.getKey();
+        return wordContent;
     }
 
     /**
